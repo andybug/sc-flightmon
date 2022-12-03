@@ -21,7 +21,7 @@ struct position_update {
     double longitude;
     int altitude;
     int ground_speed;
-    double heading;
+    int heading;
 };
 
 static volatile sig_atomic_t done = 0;
@@ -36,11 +36,6 @@ static void get_iso_8601_timestamp(char buf[64])
              utc.wHour, utc.wMinute, utc.wSecond, utc.wMilliseconds);
 }
 
-static double radians_to_degrees(double radians)
-{
-    return radians * (180.0 / M_PI);
-}
-
 static void CALLBACK sc_dispatch_proc(SIMCONNECT_RECV *data, DWORD size, void *context)
 {
     switch (data->dwID) {
@@ -53,15 +48,13 @@ static void CALLBACK sc_dispatch_proc(SIMCONNECT_RECV *data, DWORD size, void *c
             char timestamp[64];
             get_iso_8601_timestamp(timestamp);
 
-            int heading_degrees = round(radians_to_degrees(position->heading));
-
             printf("%s, %f, %f, %d, %d, %d\n",
                    timestamp,
                    position->latitude,
                    position->longitude,
                    position->altitude,
                    position->ground_speed,
-                   heading_degrees);
+                   position->heading);
         }
         break;
     }
@@ -79,7 +72,7 @@ static void sc_connection(HANDLE handle)
     SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE LONGITUDE", "degrees");
     SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE ALTITUDE", "feet", SIMCONNECT_DATATYPE_INT32);
     SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "GROUND VELOCITY", "knots", SIMCONNECT_DATATYPE_INT32);
-    SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE HEADING DEGREES TRUE", "radians");
+    SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE HEADING DEGREES GYRO", "degrees", SIMCONNECT_DATATYPE_INT32);
 
     SimConnect_RequestDataOnSimObject(handle, REQUEST_POSITION_UPDATE, DEFINITION_POSITION_UPDATE, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_SECOND);
 
