@@ -19,9 +19,9 @@ enum DEFINITION_ID {
 struct position_update {
     double latitude;
     double longitude;
-    int altitude;
-    int ground_speed;
-    int heading;
+    double ground_speed;
+    double heading;
+    int altitude; // have to watch out for struct packing
 };
 
 static volatile sig_atomic_t done = 0;
@@ -48,7 +48,7 @@ static void CALLBACK sc_dispatch_proc(SIMCONNECT_RECV *data, DWORD size, void *c
             char timestamp[64];
             get_iso_8601_timestamp(timestamp);
 
-            printf("%s, %f, %f, %d, %d, %d\n",
+            printf("%s, %f, %f, %d, %0.1f, %0.1f\n",
                    timestamp,
                    position->latitude,
                    position->longitude,
@@ -70,9 +70,9 @@ static void sc_connection(HANDLE handle)
 
     SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE LATITUDE", "degrees");
     SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE LONGITUDE", "degrees");
+    SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "GROUND VELOCITY", "knots");
+    SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE HEADING DEGREES GYRO", "degrees");
     SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE ALTITUDE", "feet", SIMCONNECT_DATATYPE_INT32);
-    SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "GROUND VELOCITY", "knots", SIMCONNECT_DATATYPE_INT32);
-    SimConnect_AddToDataDefinition(handle, DEFINITION_POSITION_UPDATE, "PLANE HEADING DEGREES GYRO", "degrees", SIMCONNECT_DATATYPE_INT32);
 
     SimConnect_RequestDataOnSimObject(handle, REQUEST_POSITION_UPDATE, DEFINITION_POSITION_UPDATE, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_SECOND);
 
