@@ -1,10 +1,10 @@
-#include <windows.h>
-#include <tchar.h>
-#include <strsafe.h>
-
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <signal.h>
 #include <math.h>
+
+#include <windows.h>
 
 #include "SimConnect.h"
 
@@ -21,17 +21,17 @@ struct position_update {
     double longitude;
     double ground_speed;
     double heading;
-    int altitude; // have to watch out for struct packing
+    int32_t altitude; // have to watch out for struct packing
 };
 
 static volatile sig_atomic_t done = 0;
 
-static void get_iso_8601_timestamp(char buf[64])
+static void get_iso_8601_timestamp(char* buf, size_t len)
 {
     SYSTEMTIME utc;
 
     GetSystemTime(&utc);
-    snprintf(buf, 64, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+    snprintf(buf, len, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
              utc.wYear, utc.wMonth, utc.wDay,
              utc.wHour, utc.wMinute, utc.wSecond, utc.wMilliseconds);
 }
@@ -45,8 +45,9 @@ static void CALLBACK sc_dispatch_proc(SIMCONNECT_RECV *data, DWORD size, void *c
         if (object_data->dwRequestID == REQUEST_POSITION_UPDATE) {
             const position_update* position = (position_update *) &object_data->dwData;
 
-            char timestamp[64];
-            get_iso_8601_timestamp(timestamp);
+            const size_t timestamp_size = 64;
+            char timestamp[timestamp_size];
+            get_iso_8601_timestamp(timestamp, timestamp_size);
 
             printf("%s, %f, %f, %d, %0.1f, %0.1f\n",
                    timestamp,
